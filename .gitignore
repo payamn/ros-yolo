@@ -1,13 +1,8 @@
 *.cmake
 
 catkin_generated
-CMakeCache.txt
-CMakeFiles
-Makefile
 test_results
 
-/catkin
-/cmake
 /devel
 /gtest
 /Testing
