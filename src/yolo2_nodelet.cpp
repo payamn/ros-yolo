@@ -103,7 +103,7 @@ namespace yolo2
       yolo.load(config, weights, confidence, nms);
 
       image_transport::ImageTransport transport = image_transport::ImageTransport(node);
-      subscriber = transport.subscribe("/camera/rgb/image_rect_color", 1, imageCallback);
+      subscriber = transport.subscribe("/camera/rgb/image_raw", 1, imageCallback);
       sub_enable_ = node.subscribe("enable", 1, enableCallback);
       pub_debug_image_ = transport.advertise("debug_image", 1);
       publisher = node.advertise<yolo2::ImageDetections>("detections", 5);
