@@ -8,6 +8,7 @@
     <node pkg="nodelet" type="nodelet" name="yolo2" args="load yolo2/Yolo2Nodelet vision_nodelet" >
       <param name="confidence" value="0.4" />
       <param name="nms" value="0.1" />
+      <param name="image_transport" value="compressed" />
     </node>
 
   </group>
