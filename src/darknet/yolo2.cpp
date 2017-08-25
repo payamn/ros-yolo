@@ -134,7 +134,8 @@ std::vector<yolo2::Detection> Detector::forward(float *data, int h, int w)
   {
     int class_id = max_index(probs_[i], num_classes);
     float prob = probs_[i][class_id];
-    if (prob >= min_confidence_)
+    // TODO: make class_id filter less hard-coded
+    if (prob >= min_confidence_ && class_id == 0)
     {
       yolo2::Detection detection;
       box b = boxes_[i];

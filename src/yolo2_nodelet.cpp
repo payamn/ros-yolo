@@ -58,18 +58,45 @@ namespace
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    im = yolo.convert_image(msg);
+    // for 8UC1 type image (fisheye)
+
+    sensor_msgs::ImagePtr rgb_msg;
+
+    if (msg->encoding == "8UC1")
+    {
+      cv::Mat mono_image;
+      cv::Mat rgb_image;
+      try
+      {
+        cv_bridge::CvImage cv_bridge_image;
+
+        mono_image = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_8UC1)->image.clone();
+        cv::cvtColor(mono_image, rgb_image, CV_GRAY2RGB);
+        
+        cv_bridge_image.image = rgb_image;
+        cv_bridge_image.encoding = "rgb8";
+        cv_bridge_image.header = msg->header;
+
+        rgb_msg = cv_bridge_image.toImageMsg();
+      }
+      catch (cv::Exception &e)
+      {
+        ROS_ERROR_STREAM("E: " << e.what());
+      }
+    }
+
+    im = yolo.convert_image(rgb_msg);
     std::unique_lock<std::mutex> lock(mutex);
     if (image_data)
       free(image_data);
-    timestamp = msg->header.stamp;
-    imageH = msg->height;
-    imageW = msg->width;
+    timestamp = rgb_msg->header.stamp;
+    imageH = rgb_msg->height;
+    imageW = rgb_msg->width;
     image_data = im.data;
     im_condition.notify_one();
     try
     {
-      frame_debug_ = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8)->image.clone();
+      frame_debug_ = cv_bridge::toCvCopy(rgb_msg, sensor_msgs::image_encodings::BGR8)->image.clone();
     }
     catch (cv::Exception &e)
     {
@@ -103,7 +130,7 @@ namespace yolo2
       yolo.load(config, weights, confidence, nms);
 
       image_transport::ImageTransport transport = image_transport::ImageTransport(node);
-      subscriber = transport.subscribe("/camera/rgb/image_raw", 1, imageCallback);
+      subscriber = transport.subscribe("/camera/fisheye/image_raw", 1, imageCallback);
       sub_enable_ = node.subscribe("enable", 1, enableCallback);
       pub_debug_image_ = transport.advertise("debug_image", 1);
       publisher = node.advertise<yolo2::ImageDetections>("detections", 5);
