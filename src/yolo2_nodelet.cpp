@@ -84,6 +84,21 @@ namespace
         ROS_ERROR_STREAM("E: " << e.what());
       }
     }
+    else
+    {
+      try
+      {
+        cv_bridge::CvImage cv_bridge_image;
+        cv_bridge_image.image = cv_bridge::toCvCopy(msg)->image.clone();
+        cv_bridge_image.encoding = "rgb8";
+        cv_bridge_image.header = msg->header;
+        rgb_msg = cv_bridge_image.toImageMsg();
+      }
+      catch (cv::Exception &e)
+      {
+        ROS_ERROR_STREAM("E: " << e.what());
+      }
+    }
 
     im = yolo.convert_image(rgb_msg);
     std::unique_lock<std::mutex> lock(mutex);
@@ -130,7 +145,8 @@ namespace yolo2
       yolo.load(config, weights, confidence, nms);
 
       image_transport::ImageTransport transport = image_transport::ImageTransport(node);
-      subscriber = transport.subscribe("/camera/fisheye/image_raw", 1, imageCallback);
+      // subscriber = transport.subscribe("/camera/fisheye/image_raw", 1, imageCallback);
+      subscriber = transport.subscribe("/camera/rgb/image_raw", 1, imageCallback);
       sub_enable_ = node.subscribe("enable", 1, enableCallback);
       pub_debug_image_ = transport.advertise("debug_image", 1);
       publisher = node.advertise<yolo2::ImageDetections>("detections", 5);
